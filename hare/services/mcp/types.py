@@ -27,6 +27,7 @@ class McpStdioServerConfig:
 class McpSseServerConfig:
     url: str
     headers: dict[str, str] = field(default_factory=dict)
+    headers_helper: Optional[str] = None
     type: str = "sse"
 
 
@@ -34,10 +35,19 @@ class McpSseServerConfig:
 class McpHttpServerConfig:
     url: str
     headers: dict[str, str] = field(default_factory=dict)
+    headers_helper: Optional[str] = None
     type: str = "http"
 
 
-McpServerConfig = McpStdioServerConfig | McpSseServerConfig | McpHttpServerConfig
+@dataclass
+class McpWebSocketServerConfig:
+    url: str
+    headers: dict[str, str] = field(default_factory=dict)
+    headers_helper: Optional[str] = None
+    type: str = "ws"
+
+
+McpServerConfig = McpStdioServerConfig | McpSseServerConfig | McpHttpServerConfig | McpWebSocketServerConfig
 
 
 @dataclass

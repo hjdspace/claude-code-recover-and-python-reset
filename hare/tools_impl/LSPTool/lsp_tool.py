@@ -1,44 +1,35 @@
 """
-LSP Tool - Language Server Protocol operations.
+LSPTool – Language Server Protocol operations.
 
 Port of: src/tools/LSPTool/LSPTool.ts
 """
-
 from __future__ import annotations
-
 from typing import Any
 
 TOOL_NAME = "LSP"
-DESCRIPTION = "Query the Language Server Protocol for code intelligence"
 
+OPERATIONS = ["definition", "references", "hover", "diagnostics", "rename",
+              "incomingCalls", "outgoingCalls", "documentSymbols"]
 
 def input_schema() -> dict[str, Any]:
     return {
         "type": "object",
         "properties": {
-            "action": {
-                "type": "string",
-                "enum": ["definition", "references", "hover", "completion", "diagnostics"],
-                "description": "LSP action",
-            },
-            "file_path": {"type": "string", "description": "Path to the file"},
-            "line": {"type": "integer", "description": "Line number (0-based)"},
-            "character": {"type": "integer", "description": "Character position (0-based)"},
+            "operation": {"type": "string", "enum": OPERATIONS},
+            "filePath": {"type": "string"},
+            "line": {"type": "number"},
+            "character": {"type": "number"},
+            "newName": {"type": "string"},
         },
-        "required": ["action", "file_path"],
+        "required": ["operation", "filePath"],
     }
-
 
 async def call(
-    action: str,
-    file_path: str,
+    operation: str,
+    filePath: str,
     line: int = 0,
     character: int = 0,
+    newName: str = "",
     **kwargs: Any,
 ) -> dict[str, Any]:
-    return {
-        "action": action,
-        "file_path": file_path,
-        "status": "not_available",
-        "message": "LSP server not connected",
-    }
+    return {"data": f"LSP {operation} on {filePath}:{line}:{character} (stub)"}

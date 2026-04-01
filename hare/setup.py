@@ -1,65 +1,55 @@
 """
-Session setup – initialization before the REPL renders.
+Session setup – initialize project environment before starting REPL.
 
 Port of: src/setup.ts
-
-Handles:
-- Environment validation
-- Working directory setup
-- Hooks configuration
-- Background jobs
-- Permission mode validation
 """
-
 from __future__ import annotations
 
 import os
-import sys
-from typing import Optional
+from typing import Any
 
-from hare.utils.cwd import set_cwd
+from hare.bootstrap.state import (
+    get_session_id,
+    set_original_cwd,
+    set_project_root,
+    switch_session,
+)
+from hare.utils.config import get_global_config
+from hare.utils.cwd import get_cwd
+from hare.utils.git import find_git_root
 
 
 async def setup(
-    *,
     cwd: str,
     permission_mode: str = "default",
     allow_dangerously_skip_permissions: bool = False,
     worktree_enabled: bool = False,
-    worktree_name: Optional[str] = None,
-    tmux_enabled: bool = False,
-    custom_session_id: Optional[str] = None,
-) -> None:
+) -> dict[str, Any]:
     """
-    Session setup matching setup() in src/setup.ts.
+    Initialize project environment.
 
-    Sets up the working directory, validates permissions, starts background
-    jobs, and prefetches data needed before the first query.
+    Returns setup result with project root, git status, session info.
     """
-    # Check Python version
-    if sys.version_info < (3, 11):
-        print("Error: Hare requires Python 3.11 or higher.", file=sys.stderr)
-        sys.exit(1)
+    set_original_cwd(cwd)
+    os.chdir(cwd)
 
-    # Set custom session ID if provided
-    if custom_session_id:
-        from hare.bootstrap.state import switch_session
-        from hare.types.ids import as_session_id
-        switch_session(as_session_id(custom_session_id))
+    git_root = await find_git_root(cwd)
+    project_root = git_root or cwd
+    set_project_root(project_root)
 
-    # Set working directory
-    set_cwd(cwd)
+    session_id = get_session_id()
+    config = get_global_config()
 
-    # Validate bypass permissions mode
-    if permission_mode == "bypassPermissions" or allow_dangerously_skip_permissions:
-        if os.name != "nt" and os.getuid() == 0 and os.environ.get("IS_SANDBOX") != "1":
-            print(
-                "--dangerously-skip-permissions cannot be used with root/sudo privileges "
-                "for security reasons",
-                file=sys.stderr,
-            )
-            sys.exit(1)
+    result: dict[str, Any] = {
+        "cwd": cwd,
+        "project_root": project_root,
+        "git_root": git_root,
+        "session_id": session_id,
+        "permission_mode": permission_mode,
+        "worktree_enabled": worktree_enabled,
+    }
 
-    # Enable configs
-    from hare.utils.config import enable_configs
-    enable_configs()
+    if worktree_enabled and git_root:
+        result["worktree"] = {"enabled": True, "branch": None}
+
+    return result

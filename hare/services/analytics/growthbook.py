@@ -56,6 +56,11 @@ def check_feature_gate(key: str) -> bool:
     return bool(get_feature_value(key, False))
 
 
+def check_statsig_feature_gate_cached_may_be_stale(key: str) -> bool:
+    """Statsig-compatible alias (port of growthbook.ts)."""
+    return check_feature_gate(key)
+
+
 async def get_dynamic_config(key: str, default: Any = None) -> Any:
     """Get a dynamic config value (blocks on init)."""
     return get_feature_value(key, default)

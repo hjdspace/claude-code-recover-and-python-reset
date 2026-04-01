@@ -1,25 +1,4 @@
-"""
-/plan command - enter plan mode.
-
-Port of: src/commands/plan/index.ts
-"""
-
-from __future__ import annotations
-
+"""Port of: src/commands/plan/. Toggle plan mode."""
 from typing import Any
-
-COMMAND_NAME = "plan"
-DESCRIPTION = "Enter plan mode to discuss approaches before coding"
-
-
-async def call(args: str, **context: Any) -> dict[str, Any]:
-    return {"type": "mode_change", "value": "plan"}
-
-
-def get_command_definition() -> dict[str, Any]:
-    return {
-        "type": "local",
-        "name": COMMAND_NAME,
-        "description": DESCRIPTION,
-        "call": call,
-    }
+async def call(args: list[str], context: Any) -> dict[str, Any]:
+    return {"type": "text", "value": "Plan mode toggled."}

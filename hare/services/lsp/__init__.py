@@ -1,3 +1,2 @@
-from hare.services.lsp.lsp_client import LSPClient
-from hare.services.lsp.lsp_server_manager import LSPServerManager
-from hare.services.lsp.config import get_lsp_config
+"""LSP service. Port of: src/services/lsp/"""
+from hare.services.lsp.manager import LspServerManager, get_lsp_server_manager

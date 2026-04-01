@@ -1,27 +1,16 @@
-"""
-Shell quoting utilities.
-
-Port of: src/utils/bash/shellQuoting.ts, shellQuote.ts
-"""
-
+"""Port of: src/utils/bash/shellQuote.ts + shellQuoting.ts"""
 from __future__ import annotations
-
-import re
-import shlex
-
+import re, shlex
 
 def shell_quote(s: str) -> str:
-    """Quote a string for shell use."""
+    if not s: return "''"
     return shlex.quote(s)
 
-
-def shell_join(args: list[str]) -> str:
-    """Join arguments with proper shell quoting."""
+def shell_quote_list(args: list[str]) -> str:
     return " ".join(shell_quote(a) for a in args)
 
+def shell_join(args: list[str]) -> str:
+    return shell_quote_list(args)
 
 def needs_quoting(s: str) -> bool:
-    """Check if a string needs shell quoting."""
-    if not s:
-        return True
-    return bool(re.search(r'[^a-zA-Z0-9_\-./=:@]', s))
+    return bool(re.search(r'[^a-zA-Z0-9_./:-]', s))

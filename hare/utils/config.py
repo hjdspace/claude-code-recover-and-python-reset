@@ -17,6 +17,11 @@ from typing import Any, Optional
 class GlobalConfig:
     theme: str = "default"
     last_release_notes_seen: Optional[str] = None
+    # Optional fields used by buddy/companion and OAuth (extended settings)
+    user_id: Optional[str] = None
+    oauth_account: Optional[Any] = None
+    companion: Optional[Any] = None
+    companion_muted: bool = False
 
 
 @dataclass
@@ -57,6 +62,10 @@ def get_global_config() -> GlobalConfig:
     return GlobalConfig(
         theme=data.get("theme", "default"),
         last_release_notes_seen=data.get("lastReleaseNotesSeen"),
+        user_id=data.get("userID"),
+        oauth_account=data.get("oauthAccount"),
+        companion=data.get("companion"),
+        companion_muted=bool(data.get("companionMuted", False)),
     )
 
 

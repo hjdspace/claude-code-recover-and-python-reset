@@ -6,7 +6,15 @@ Port of: src/utils/errors.ts
 
 from __future__ import annotations
 
+import errno
 from typing import Any
+
+
+def get_errno_code(error: Any) -> str | None:
+    """Return symbolic errno name (e.g. ENOENT) for OSError, else None."""
+    if isinstance(error, OSError) and error.errno is not None:
+        return errno.errorcode.get(error.errno)  # type: ignore[arg-type]
+    return None
 
 
 def error_message(error: Any) -> str:
@@ -31,3 +39,30 @@ def is_abort_error(error: Any) -> bool:
 
 # Import asyncio only when needed
 import asyncio
+
+
+class ClaudeError(Exception):
+    """Base error class for Claude Code."""
+    pass
+
+
+class MalformedCommandError(ClaudeError):
+    """Raised when a command is malformed."""
+    pass
+
+
+class ShellError(ClaudeError):
+    """Raised when a shell command fails."""
+    def __init__(self, message: str, exit_code: int = 1):
+        super().__init__(message)
+        self.exit_code = exit_code
+
+
+def is_fs_inaccessible(error: Any) -> bool:
+    """Check if error indicates filesystem is inaccessible."""
+    if isinstance(error, OSError):
+        return error.errno in (
+            errno.EACCES, errno.EPERM, errno.EROFS,
+            errno.ENOSPC, errno.EIO,
+        )
+    return False

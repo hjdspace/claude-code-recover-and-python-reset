@@ -108,9 +108,15 @@ class _TodoWriteTool(ToolBase):
         return ToolResult(data="\n".join(lines))
 
 
-def get_todos() -> list[dict[str, Any]]:
+def get_todos(key: str = "") -> list[dict[str, Any]]:
     """Get the current TODO list."""
     return list(_todos)
+
+
+def set_todos(key: str, todos: list[dict[str, Any]]) -> None:
+    """Set the TODO list."""
+    global _todos
+    _todos = list(todos)
 
 
 TodoWriteTool = _TodoWriteTool()

@@ -10,10 +10,11 @@ import os
 import sys
 
 
-def log_for_debugging(message: str) -> None:
-    """Log a debug message if verbose mode is enabled."""
+def log_for_debugging(message: str, *, level: str | None = None) -> None:
+    """Log a debug message if verbose mode is enabled. `level` is accepted for API parity."""
     if os.environ.get("CLAUDE_CODE_DEBUG") == "1":
-        print(f"[DEBUG] {message}", file=sys.stderr)
+        prefix = f"[{level.upper()}] " if level else "[DEBUG] "
+        print(f"{prefix}{message}", file=sys.stderr)
 
 
 def log_error(error: Exception) -> None:

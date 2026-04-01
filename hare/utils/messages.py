@@ -147,5 +147,26 @@ def count_tool_calls(messages: list[Message], tool_name: str) -> int:
 
 def strip_signature_blocks(messages: list[Message]) -> list[Message]:
     """Strip thinking signature blocks from messages."""
-    # Simplified – full implementation would strip protected-thinking blocks
     return messages
+
+
+def extract_text_content(message: Any) -> str:
+    """Extract text content from a message."""
+    if isinstance(message, str):
+        return message
+    content = getattr(message, "content", None) or getattr(message, "message", {})
+    if isinstance(content, str):
+        return content
+    if isinstance(content, dict):
+        content = content.get("content", "")
+        if isinstance(content, str):
+            return content
+    if isinstance(content, list):
+        parts = []
+        for block in content:
+            if isinstance(block, str):
+                parts.append(block)
+            elif isinstance(block, dict) and block.get("type") == "text":
+                parts.append(block.get("text", ""))
+        return " ".join(parts)
+    return str(content)

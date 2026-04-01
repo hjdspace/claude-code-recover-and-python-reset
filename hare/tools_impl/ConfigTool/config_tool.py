@@ -1,63 +1,62 @@
 """
-Config Tool - read/write configuration settings.
+ConfigTool – get/set configuration values.
 
 Port of: src/tools/ConfigTool/ConfigTool.ts
 """
-
 from __future__ import annotations
-
+import json, os
 from typing import Any
 
-from hare.utils.config_full import get_global_config, write_through_global_config_cache
-
 TOOL_NAME = "Config"
-DESCRIPTION = "Read or update configuration settings"
-PROMPT = """Use this tool to read or modify Claude Code configuration settings."""
-
-SUPPORTED_SETTINGS = [
-    "theme", "editor_mode", "verbose", "notification_channel",
-    "auto_update", "output_style",
-]
-
 
 def input_schema() -> dict[str, Any]:
     return {
         "type": "object",
         "properties": {
-            "action": {
-                "type": "string",
-                "enum": ["get", "set", "list"],
-                "description": "Action to perform",
-            },
-            "key": {"type": "string", "description": "Setting key"},
-            "value": {"type": "string", "description": "Setting value (for set)"},
+            "setting": {"type": "string", "description": "Setting key (dot notation)"},
+            "value": {"type": "string", "description": "New value (omit for GET)"},
         },
-        "required": ["action"],
+        "required": ["setting"],
     }
 
+def _get_config_path() -> str:
+    return os.path.join(os.path.expanduser("~"), ".claude", "config.json")
 
-async def call(
-    action: str,
-    key: str = "",
-    value: str = "",
-    **kwargs: Any,
-) -> dict[str, Any]:
-    if action == "list":
-        config = get_global_config()
-        return {"settings": {k: config.get(k) for k in SUPPORTED_SETTINGS}}
+def _load_config() -> dict[str, Any]:
+    path = _get_config_path()
+    if not os.path.isfile(path):
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return {}
 
-    if action == "get":
-        if not key:
-            return {"error": "key is required for get"}
-        config = get_global_config()
-        return {"key": key, "value": config.get(key)}
+def _save_config(config: dict[str, Any]) -> None:
+    path = _get_config_path()
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(config, f, indent=2)
 
-    if action == "set":
-        if not key or not value:
-            return {"error": "key and value are required for set"}
-        if key not in SUPPORTED_SETTINGS:
-            return {"error": f"Unknown setting: {key}. Supported: {SUPPORTED_SETTINGS}"}
-        write_through_global_config_cache(key, value)
-        return {"key": key, "value": value, "status": "updated"}
-
-    return {"error": f"Unknown action: {action}"}
+async def call(setting: str, value: str | None = None, **kwargs: Any) -> dict[str, Any]:
+    config = _load_config()
+    parts = setting.split(".")
+    if value is None:
+        current: Any = config
+        for p in parts:
+            if isinstance(current, dict):
+                current = current.get(p)
+            else:
+                return {"data": "null"}
+        return {"data": json.dumps(current)}
+    current_dict = config
+    for p in parts[:-1]:
+        if p not in current_dict or not isinstance(current_dict[p], dict):
+            current_dict[p] = {}
+        current_dict = current_dict[p]
+    try:
+        current_dict[parts[-1]] = json.loads(value)
+    except json.JSONDecodeError:
+        current_dict[parts[-1]] = value
+    _save_config(config)
+    return {"data": f"Set {setting} = {value}"}

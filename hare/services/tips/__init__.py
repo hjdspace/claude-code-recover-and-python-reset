@@ -1,3 +1,2 @@
-from hare.services.tips.tip_registry import TipRegistry, get_tip_registry
-from hare.services.tips.tip_history import TipHistory
-from hare.services.tips.tip_scheduler import TipScheduler
+"""Tips service. Port of: src/services/tips/"""
+from hare.services.tips.tips import get_tip, get_all_tips

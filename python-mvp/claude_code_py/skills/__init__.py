@@ -1,1 +1,0 @@
-"""Skill loader placeholders."""

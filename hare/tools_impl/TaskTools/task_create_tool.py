@@ -8,7 +8,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from hare.task import generate_task_id
+import uuid
+
+
+def generate_task_id() -> str:
+    return str(uuid.uuid4())[:8]
 
 TOOL_NAME = "TaskCreate"
 DESCRIPTION = "Create a new background task"

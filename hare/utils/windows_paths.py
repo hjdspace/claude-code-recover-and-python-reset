@@ -100,3 +100,13 @@ def join_windows_path(*parts: str) -> str:
     if sys.platform == "win32":
         return os.path.join(*parts)
     return "\\".join(parts)
+
+
+def posix_path_to_windows_path(path: str) -> str:
+    """Convert a POSIX-style path to a Windows path."""
+    return from_posix_path(path)
+
+
+def windows_path_to_posix_path(path: str) -> str:
+    """Convert a Windows path to a POSIX-style path."""
+    return to_posix_path(path)

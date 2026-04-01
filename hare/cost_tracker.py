@@ -92,3 +92,15 @@ def reset_cost_tracker() -> None:
     """Reset cost tracking for a new session."""
     global _tracker
     _tracker = CostTracker()
+
+
+def format_total_cost() -> str:
+    cost = get_total_cost()
+    if cost <= 0:
+        return ""
+    return f"Total cost: ${cost:.4f} ({_tracker.request_count} requests, {_tracker.total_input_tokens} input, {_tracker.total_output_tokens} output tokens)"
+
+
+def save_current_session_costs(fps_metrics: Any = None) -> None:
+    """Save session costs. Stub."""
+    pass

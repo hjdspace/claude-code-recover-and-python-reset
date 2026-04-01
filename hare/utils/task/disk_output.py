@@ -10,6 +10,9 @@ import json
 import os
 from typing import Any
 
+MAX_TASK_OUTPUT_BYTES = 5 * 1024 * 1024 * 1024
+MAX_TASK_OUTPUT_BYTES_DISPLAY = "5GB"
+
 
 def get_task_output_path(task_id: str, session_dir: str = "") -> str:
     """Get the file path for a task's output."""

@@ -46,3 +46,11 @@ def is_under_directory(path: str, directory: str) -> bool:
         return path_resolved.startswith(dir_resolved + os.sep) or path_resolved == dir_resolved
     except (OSError, ValueError):
         return False
+
+
+def sanitize_path(path: str) -> str:
+    """Sanitize a path by removing dangerous characters."""
+    import re
+    sanitized = re.sub(r'[\x00-\x1f\x7f]', '', path)
+    sanitized = sanitized.replace('\0', '')
+    return sanitized

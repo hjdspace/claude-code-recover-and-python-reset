@@ -1,73 +1,62 @@
 """
-GrepTool - search file contents using ripgrep.
+GrepTool – ripgrep-based code search.
 
-Port of: src/tools/GrepTool/GrepTool.ts + prompt.ts
+Port of: src/tools/GrepTool/GrepTool.ts
 """
-
 from __future__ import annotations
-
-import asyncio
-import shutil
+import asyncio, os, json
 from typing import Any
 
-GREP_TOOL_NAME = "Grep"
-MAX_RESULTS = 500
-
+TOOL_NAME = "Grep"
+GREP_TOOL_NAME = TOOL_NAME
 
 def input_schema() -> dict[str, Any]:
     return {
         "type": "object",
         "properties": {
-            "pattern": {"type": "string", "description": "Regex pattern to search for"},
-            "path": {"type": "string", "description": "Directory to search in"},
-            "include": {"type": "string", "description": "File glob pattern to include"},
+            "pattern": {"type": "string", "description": "Regex pattern"},
+            "path": {"type": "string", "description": "Search directory"},
+            "glob": {"type": "string", "description": "File glob filter"},
+            "type": {"type": "string", "description": "File type filter"},
+            "output_mode": {"type": "string", "enum": ["content", "files_with_matches", "count"]},
+            "head_limit": {"type": "number"},
+            "multiline": {"type": "boolean"},
         },
         "required": ["pattern"],
     }
 
-
 async def call(
-    tool_input: dict[str, Any],
-    *,
-    cwd: str = "",
+    pattern: str,
+    path: str | None = None,
+    output_mode: str = "files_with_matches",
+    head_limit: int | None = None,
+    multiline: bool = False,
+    **kwargs: Any,
 ) -> dict[str, Any]:
-    """Search file contents using ripgrep."""
-    pattern = tool_input.get("pattern", "")
-    search_path = tool_input.get("path", "")
-    include = tool_input.get("include", "")
-
-    if not pattern:
-        return {"type": "error", "error": "pattern is required"}
-
-    rg = shutil.which("rg")
-    if not rg:
-        return {"type": "error", "error": "ripgrep (rg) not found in PATH"}
-
-    cmd = [rg, "--no-heading", "--line-number", "--color=never", f"--max-count={MAX_RESULTS}"]
-    if include:
-        cmd.extend(["--glob", include])
-    cmd.append(pattern)
-    cmd.append(search_path or ".")
-
+    base = path or os.getcwd()
+    args = ["rg", "--json"]
+    if output_mode == "files_with_matches":
+        args.append("-l")
+    elif output_mode == "count":
+        args.append("-c")
+    if multiline:
+        args.extend(["-U", "--multiline-dotall"])
+    if kwargs.get("glob"):
+        args.extend(["--glob", kwargs["glob"]])
+    if kwargs.get("type"):
+        args.extend(["--type", kwargs["type"]])
+    args.extend(["--", pattern, base])
     try:
         proc = await asyncio.create_subprocess_exec(
-            *cmd,
-            cwd=cwd or None,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+            *args, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
         )
-        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=30)
+        stdout, stderr = await proc.communicate()
         output = stdout.decode("utf-8", errors="replace")
-        if not output.strip():
-            return {"type": "tool_result", "content": "No matches found.", "is_error": False}
-        lines = output.strip().split("\n")
-        if len(lines) > MAX_RESULTS:
-            lines = lines[:MAX_RESULTS]
-            output = "\n".join(lines) + f"\n\n(showing first {MAX_RESULTS} results)"
-        else:
-            output = "\n".join(lines)
-        return {"type": "tool_result", "content": output, "is_error": False}
-    except asyncio.TimeoutError:
-        return {"type": "error", "error": "Search timed out"}
+        lines = output.strip().split("\n") if output.strip() else []
+        if head_limit and len(lines) > head_limit:
+            lines = lines[:head_limit]
+        return {"output": "\n".join(lines), "matchCount": len(lines)}
+    except FileNotFoundError:
+        return {"error": "ripgrep (rg) not found in PATH"}
     except Exception as e:
-        return {"type": "error", "error": str(e)}
+        return {"error": str(e)}
