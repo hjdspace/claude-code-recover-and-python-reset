@@ -101,7 +101,65 @@ hare/
 ## 环境要求
 
 - Python 3.11+
-- 无外部依赖（纯标准库实现）
+- `anthropic` SDK（调用 Anthropic API 必需）
+
+## 快速开始
+
+### 1. 安装依赖
+
+```bash
+pip install anthropic
+```
+
+### 2. 设置 API Key
+
+```bash
+# Linux / macOS
+export ANTHROPIC_API_KEY="sk-ant-api03-你的key"
+
+# Windows PowerShell
+$env:ANTHROPIC_API_KEY = "sk-ant-api03-你的key"
+
+# Windows CMD
+set ANTHROPIC_API_KEY=sk-ant-api03-你的key
+```
+
+### 3. 运行
+
+```bash
+# 交互模式（REPL）
+python -m hare
+
+# 非交互模式（单次问答，结果直接输出到 stdout）
+python -m hare -p "帮我写一个 Python hello world"
+
+# 指定模型
+python -m hare -p "hello" --model claude-sonnet-4-6-20260301
+
+# 指定工作目录
+python -m hare --cwd /path/to/project
+
+# 查看所有选项
+python -m hare --help
+```
+
+### 4. 作为库使用
+
+```python
+import asyncio
+from hare.main import cli_main
+
+# 等价于命令行 python -m hare -p "hello"
+asyncio.run(cli_main(["-p", "hello"]))
+```
+
+### 可选环境变量
+
+| 变量 | 说明 |
+|------|------|
+| `ANTHROPIC_API_KEY` | **必需** — Anthropic API 密钥 |
+| `ANTHROPIC_BASE_URL` | 自定义 API 端点（代理/自托管） |
+| `CLAUDE_CODE_SIMPLE` | 设为 `1` 启用精简模式（仅 Bash + Read + Edit 三个工具） |
 
 ## 模块统计
 
@@ -133,16 +191,24 @@ hare/
 - `context/` — React Context
 - `state/` — UI 状态管理（部分）
 
-## 使用方式
+## 模块级使用示例
 
 ```python
-import sys
-sys.path.insert(0, '/path/to/project')
+# 工具注册表
+from hare.tools import get_all_base_tools
+tools = get_all_base_tools()  # [Agent, Bash, Glob, Grep, Read, Edit, Write, ...]
 
+# QueryEngine（对话引擎核心）
+from hare.query_engine import QueryEngine, QueryEngineConfig
+
+# 环境信息
 from hare.utils.env import env
-from hare.tools_impl.BashTool.bash_tool import call as bash_call
-from hare.services.api.api import create_api_client
-from hare.query.query_engine import QueryEngine
+print(env.platform, env.arch)
+
+# 单独调用内置工具
+from hare.tools_impl.FileReadTool.file_read_tool import call as read_file
+import asyncio
+result = asyncio.run(read_file(file_path="/etc/hosts"))
 ```
 
 ## 源码对照

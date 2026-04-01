@@ -74,7 +74,7 @@ async def cli_main(args: list[str] | None = None) -> None:
     )
 
     # Determine mode
-    prompt = parsed.print_mode or " ".join(parsed.prompt) if parsed.prompt else None
+    prompt = parsed.print_mode or (" ".join(parsed.prompt) if parsed.prompt else None)
 
     if prompt:
         # Non-interactive (print) mode

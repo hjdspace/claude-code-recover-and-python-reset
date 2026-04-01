@@ -19,8 +19,6 @@ from hare.types.message import (
     UserMessage,
 )
 
-
-# Set of synthetic message texts the system uses internally
 SYNTHETIC_MESSAGES: set[str] = set()
 
 
@@ -31,7 +29,6 @@ def create_user_message(
     tool_use_result: Optional[str] = None,
     source_tool_assistant_uuid: Optional[str] = None,
 ) -> UserMessage:
-    """Create a UserMessage matching createUserMessage in TS."""
     return UserMessage(
         type="user",
         uuid=str(uuid4()),
@@ -43,13 +40,11 @@ def create_user_message(
 
 
 def create_user_interruption_message(*, tool_use: bool = False) -> UserMessage:
-    """Create a user interruption message."""
     content = "[Request interrupted by user]"
     return create_user_message(content=content, is_meta=True)
 
 
 def create_system_message(content: str, subtype: str = "info") -> SystemMessage:
-    """Create a system message."""
     return SystemMessage(
         type="system",
         uuid=str(uuid4()),
@@ -63,7 +58,6 @@ def create_assistant_api_error_message(
     content: str,
     error: Optional[str] = None,
 ) -> AssistantMessage:
-    """Create a synthetic assistant message for API errors."""
     return AssistantMessage(
         type="assistant",
         uuid=str(uuid4()),
@@ -77,7 +71,6 @@ def create_assistant_api_error_message(
 
 
 def create_attachment_message(attachment: dict[str, Any]) -> AttachmentMessage:
-    """Create an attachment message."""
     return AttachmentMessage(
         type="attachment",
         uuid=str(uuid4()),
@@ -118,7 +111,6 @@ def create_microcompact_boundary_message(
 
 
 def get_messages_after_compact_boundary(messages: list[Message]) -> list[Message]:
-    """Return messages after the last compact boundary, or all messages if none."""
     for i in range(len(messages) - 1, -1, -1):
         msg = messages[i]
         if getattr(msg, "type", "") == "system" and getattr(msg, "subtype", "") == "compact_boundary":
@@ -129,12 +121,10 @@ def get_messages_after_compact_boundary(messages: list[Message]) -> list[Message
 def normalize_messages_for_api(
     messages: list[Message], tools: Sequence[Any]
 ) -> list[Message]:
-    """Normalize messages for the API (filter system messages, etc.)."""
     return [m for m in messages if m.type in ("user", "assistant")]
 
 
 def count_tool_calls(messages: list[Message], tool_name: str) -> int:
-    """Count how many times a specific tool was called in the message list."""
     count = 0
     for msg in messages:
         if msg.type == "assistant" and isinstance(msg.message.content, list):
@@ -146,12 +136,10 @@ def count_tool_calls(messages: list[Message], tool_name: str) -> int:
 
 
 def strip_signature_blocks(messages: list[Message]) -> list[Message]:
-    """Strip thinking signature blocks from messages."""
     return messages
 
 
 def extract_text_content(message: Any) -> str:
-    """Extract text content from a message."""
     if isinstance(message, str):
         return message
     content = getattr(message, "content", None) or getattr(message, "message", {})
